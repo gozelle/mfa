@@ -21,23 +21,23 @@ var codeTests = []struct {
 }
 
 func TestCode(t *testing.T) {
-
+	
 	for _, v := range codeTests {
 		c := ComputeCode(v.secret, v.value)
-
+		
 		if c != v.code {
 			t.Errorf("computeCode(%s, %d): got %d expected %d\n", v.secret, v.value, c, v.code)
 		}
-
+		
 	}
 }
 
 func TestScratchCode(t *testing.T) {
-
+	
 	var cotp OTPConfig
-
+	
 	cotp.ScratchCodes = []int{11112222, 22223333}
-
+	
 	var scratchTests = []struct {
 		code   int
 		result bool
@@ -49,7 +49,7 @@ func TestScratchCode(t *testing.T) {
 		{22223333, false},
 		{33334444, false},
 	}
-
+	
 	for _, s := range scratchTests {
 		r := cotp.checkScratchCodes(s.code)
 		if r != s.result {
@@ -59,15 +59,15 @@ func TestScratchCode(t *testing.T) {
 }
 
 func TestHotpCode(t *testing.T) {
-
+	
 	var cotp OTPConfig
-
+	
 	// reuse our test values from above
 	// perhaps create more?
 	cotp.Secret = "2SH3V3GDW7ZNMGYE"
 	cotp.HotpCounter = 1
 	cotp.WindowSize = 3
-
+	
 	var counterCodes = []struct {
 		code    int
 		result  bool
@@ -80,7 +80,7 @@ func TestHotpCode(t *testing.T) {
 		{ /* 10 */ 481725, false, 8}, // outside of window
 		{ /* 10 */ 481725, true, 11}, // now inside of window
 	}
-
+	
 	for i, s := range counterCodes {
 		r := cotp.checkHotpCode(s.code)
 		if r != s.result {
@@ -93,13 +93,13 @@ func TestHotpCode(t *testing.T) {
 }
 
 func TestTotpCode(t *testing.T) {
-
+	
 	var cotp OTPConfig
-
+	
 	// reuse our test values from above
 	cotp.Secret = "2SH3V3GDW7ZNMGYE"
 	cotp.WindowSize = 5
-
+	
 	var windowTest = []struct {
 		code   int
 		t0     int
@@ -113,14 +113,14 @@ func TestTotpCode(t *testing.T) {
 		{50548, 10002, true},
 		{50548, 10003, false},
 	}
-
+	
 	for i, s := range windowTest {
 		r := cotp.checkTotpCode(s.t0, s.code)
 		if r != s.result {
 			t.Errorf("counterCode(%d) (step %d) failed: got %t expected %t", s.code, i, r, s.result)
 		}
 	}
-
+	
 	cotp.DisallowReuse = make([]int, 0)
 	var noreuseTest = []struct {
 		code       int
@@ -135,7 +135,7 @@ func TestTotpCode(t *testing.T) {
 		{646986 /* 10002 */, 10002, true, []int{10000, 10001, 10002}},
 		{842639 /* 10003 */, 10003, true, []int{10001, 10002, 10003}},
 	}
-
+	
 	for i, s := range noreuseTest {
 		r := cotp.checkTotpCode(s.t0, s.code)
 		if r != s.result {
@@ -158,19 +158,19 @@ func TestTotpCode(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-
+	
 	otpconf := &OTPConfig{
 		Secret:       "2SH3V3GDW7ZNMGYE",
 		WindowSize:   3,
 		HotpCounter:  1,
 		ScratchCodes: []int{11112222, 22223333},
 	}
-
+	
 	type attempt struct {
 		code   string
 		result bool
 	}
-
+	
 	var attempts = []attempt{
 		{"foobar", false},          // not digits
 		{"1fooba", false},          // not valid number
@@ -181,14 +181,14 @@ func TestAuthenticate(t *testing.T) {
 		{"11112222", true},
 		{"11112222", false},
 	}
-
+	
 	for _, a := range attempts {
 		r, _ := otpconf.Authenticate(a.code)
 		if r != a.result {
 			t.Errorf("bad result from code=%s: got %t expected %t\n", a.code, r, a.result)
 		}
 	}
-
+	
 	// let's check some time-based codes
 	otpconf.HotpCounter = 0
 	// I haven't mocked the clock, so we'll just compute one
@@ -200,18 +200,18 @@ func TestAuthenticate(t *testing.T) {
 	}
 	c := ComputeCode(otpconf.Secret, t0)
 	code := fmt.Sprintf("%06d", c)
-
+	
 	attempts = []attempt{
 		{code + "1", false},
 		{code, true},
 	}
-
+	
 	for _, a := range attempts {
 		r, _ := otpconf.Authenticate(a.code)
 		if r != a.result {
 			t.Errorf("bad result from code=%s: got %t expected %t\n", a.code, r, a.result)
 		}
-
+		
 		otpconf.UTC = true
 		r, _ = otpconf.Authenticate(a.code)
 		if r != a.result {
@@ -219,14 +219,14 @@ func TestAuthenticate(t *testing.T) {
 		}
 		otpconf.UTC = false
 	}
-
+	
 }
 
 func TestProvisionURI(t *testing.T) {
 	otpconf := OTPConfig{
 		Secret: "x",
 	}
-
+	
 	cases := []struct {
 		user, iss string
 		hotp      bool
@@ -237,7 +237,7 @@ func TestProvisionURI(t *testing.T) {
 		{"test", "Company", true, "otpauth://hotp/Company:test?counter=1&issuer=Company&secret=x"},
 		{"test", "Company", false, "otpauth://totp/Company:test?issuer=Company&secret=x"},
 	}
-
+	
 	for i, c := range cases {
 		otpconf.HotpCounter = 0
 		if c.hotp {
