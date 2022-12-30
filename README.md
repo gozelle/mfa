@@ -13,3 +13,25 @@ It implements the one-time-password algorithms specified in:
 You can learn more about the Google Authenticator library at its project page:
 
 * https://github.com/google/google-authenticator
+
+## 上手使用
+
+```go
+package main
+
+func main() {
+	var otp OTPConfig
+	
+	otp.Secret = "2SH3V3GDW7ZNMGYE"  // 请注意开始
+	otp.WindowSize = 1
+	
+	uri := otp.ProvisionURIWithIssuer("user", "issuer")
+	_ = uri  // 生成二维码地址
+	
+	
+	ok,err := otp.Authenticate("324592") 
+	if err != nil || !ok{
+		// 验证码错误
+    }
+}
+```

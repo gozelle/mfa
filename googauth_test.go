@@ -1,4 +1,4 @@
-package dgoogauth
+package mfa
 
 import (
 	"fmt"
